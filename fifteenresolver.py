@@ -21,11 +21,22 @@ def main():
     target_state = generateTargetState(data["rows"], data["columns"])
 
     print(target_state)
+
+    state = data["state"]
     
+    print(checkStateIsTarget(state, target_state))
 
 
+    # check strategy
+    if strategy == "bfs":
+        solveBfs(strategy_option)
+    elif strategy == "dfs":
+        solveDfs(strategy_option)
+    elif strategy == "astr":
+        solveAstar(strategy_option)
+    else:
+        print("Wrong strategy name")
 
-    # switch case for strategy and strategy option
 
     # checkIfValidOption(strategy, strategy_option)
 
@@ -44,7 +55,10 @@ def readDataFromFile(path_to_in_file):
     data = {}
     data["rows"] = splitted[0]
     data["columns"] = splitted[1]
-    data["state"] = splitted[2:]
+    data["state"] = []
+
+    for i in range(1, int(data["rows"])*int(data["columns"])):
+        data["state"].append(int(splitted[i+1]))
 
     print("data: " + str(data))
     return data
@@ -56,7 +70,12 @@ def generateTargetState(rows, columns):
         target_state.append(i)
     target_state.append(0)
     return target_state
-    
+
+def checkStateIsTarget(state, target):
+    if state == target:
+        return True
+    else: 
+        return False
 
 def solveBfs(strategy_option):
     pass
