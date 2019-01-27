@@ -1,7 +1,22 @@
 import sys
+import numpy as np
 
 class Node():
-    pass
+    id = 0
+    state = []
+    children = []
+    parent_id = -1
+    possible_moves = []
+    path = []
+    depth_level = -1
+
+    def checkPossibleMoves(self):
+        pass
+
+    def generateChildrenStates(self):
+        pass
+    
+
 
 def main():
     strategy = "" 
@@ -29,7 +44,7 @@ def main():
 
     # check strategy
     if strategy == "bfs":
-        solveBfs(strategy_option)
+        solveBfs(strategy_option, state)
     elif strategy == "dfs":
         solveDfs(strategy_option)
     elif strategy == "astr":
@@ -40,7 +55,7 @@ def main():
 
     # checkIfValidOption(strategy, strategy_option)
 
-
+    #print(generateMatrix())
 
     
     print(strategy, strategy_option, path_to_in_file) 
@@ -77,21 +92,29 @@ def checkStateIsTarget(state, target):
     else: 
         return False
 
-def solveBfs(strategy_option):
-    pass
+def solveBfs(strategy_option, state):
+    frontier = []
+    visited = []
 
 def solveDfs(strategy_option):
-    pass
+    frontier = []
 
 def solveAstar(strategy_option):
+    frontier = []
+
+def saveSolution(solution_length, solution_trace):
     pass
 
-def saveOutput():
+def saveStats(solution_length, visited_states_count, checked_states_count, max_recursion_depth, time):
     pass
 
-def saveInfo():
-    pass
-
+def generateMatrix(vector, rows, columns):
+    matrix = []
+    start_index = 0
+    for i in range(rows):
+        matrix.append(vector[start_index:start_index + columns])
+        start_index += columns
+    return matrix
 
 if __name__ == "__main__":
     main()
