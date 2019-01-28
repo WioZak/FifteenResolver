@@ -1,27 +1,29 @@
 import sys
 import numpy as np
+from Sets import set
 
 class Node():
     id = 0
-    state = []
-    children = []
+    state_matrix = []
+    children = {}  # {'u' : Node()}
     parent_id = -1
     possible_moves = []
     path = []
     depth_level = -1
 
-    def checkPossibleMoves(self):
-        pass
+    def __init__(self, state_matrix):
+        self.state_matrix = state_matrix
+
+    def setID(self,id):
+        self.id = id
 
     def generateChildrenStates(self):
         pass
+
     
 
 
 def main():
-    strategy = "" 
-    strategy_option = ""
-    path_to_in_file = ""
 
     if len(sys.argv) == 4:
         strategy = sys.argv[1]
@@ -33,13 +35,15 @@ def main():
 
     data = readDataFromFile(path_to_in_file)
 
-    target_state = generateTargetState(data["rows"], data["columns"])
+    target_state_matrix = generateTargetState(data["rows"], data["columns"])
 
-    print(target_state)
+    print(target_state_matrix)
 
     state = data["state"]
+    state_matrix = generateMatrix(state, data["rows"], data["columns"])
+    print(state_matrix)
     
-    print(checkStateIsTarget(state, target_state))
+    print(checkStateIsTarget(state_matrix, target_state_matrix))
 
 
     # check strategy
@@ -55,9 +59,6 @@ def main():
 
     # checkIfValidOption(strategy, strategy_option)
 
-    #print(generateMatrix())
-
-    
     print(strategy, strategy_option, path_to_in_file) 
 
 def readDataFromFile(path_to_in_file):
@@ -68,11 +69,11 @@ def readDataFromFile(path_to_in_file):
     splitted = read_data.split()
 
     data = {}
-    data["rows"] = splitted[0]
-    data["columns"] = splitted[1]
+    data["rows"] = int(splitted[0])
+    data["columns"] = int(splitted[1])
     data["state"] = []
 
-    for i in range(1, int(data["rows"])*int(data["columns"])):
+    for i in range(1, data["rows"]*data["columns"]+1):
         data["state"].append(int(splitted[i+1]))
 
     print("data: " + str(data))
@@ -81,32 +82,11 @@ def readDataFromFile(path_to_in_file):
 
 def generateTargetState(rows, columns):
     target_state = []
-    for i in range(1, int(rows)*int(columns)):
+    for i in range(1, rows * columns):
         target_state.append(i)
     target_state.append(0)
-    return target_state
-
-def checkStateIsTarget(state, target):
-    if state == target:
-        return True
-    else: 
-        return False
-
-def solveBfs(strategy_option, state):
-    frontier = []
-    visited = []
-
-def solveDfs(strategy_option):
-    frontier = []
-
-def solveAstar(strategy_option):
-    frontier = []
-
-def saveSolution(solution_length, solution_trace):
-    pass
-
-def saveStats(solution_length, visited_states_count, checked_states_count, max_recursion_depth, time):
-    pass
+    matrix = generateMatrix(target_state, rows, columns)
+    return matrix
 
 def generateMatrix(vector, rows, columns):
     matrix = []
@@ -115,6 +95,60 @@ def generateMatrix(vector, rows, columns):
         matrix.append(vector[start_index:start_index + columns])
         start_index += columns
     return matrix
+
+def checkStateIsTarget(state, target):
+    if state == target:
+        return True
+    else: 
+        return False
+
+def solveBfs(strategy_option, state):
+    strategy_option = list(strategy_option)
+
+    frontier = []
+    visited = Set([])
+
+
+def solveDfs(strategy_option):
+    frontier = []
+
+def solveAstar(strategy_option):
+    frontier = []
+
+def generateStateByMoveChar(state, char, rows, columns, x_0, y_0):
+    if char == "U":
+        pass
+    elif char == "D":
+        pass
+    elif char == "L":
+        pass
+    elif char == "R":
+        pass
+
+def HammingCost(state, target_state, rows, columns): # binary cost for every tile except 0
+    cost = 0
+    for i in range(rows):
+        for j in range(columns):
+            if state[i][j] != 0:
+                if state[i][j] != target_state[i][j]:
+                    cost += 1         
+    return cost
+
+def ManhattanCost(state, target_state, rows, columns): # for every pair except 0
+    sum = 0
+    for i in range(rows):
+        for j in range(columns):
+            if state[i][j] != 0:
+                pass
+
+def saveSolution(solution_length, solution_trace):
+    pass
+
+def saveStats(solution_length, visited_states_count, checked_states_count, max_recursion_depth, time):
+    pass
+
+
+
 
 if __name__ == "__main__":
     main()
