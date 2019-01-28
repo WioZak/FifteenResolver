@@ -1,27 +1,56 @@
 import sys
 import numpy as np
-from Sets import set
 
-class Node():
+class State(): # aka node
     id = 0
     state_matrix = []
     children = {}  # {'u' : Node()}
-    parent_id = -1
     possible_moves = []
     path = []
-    depth_level = -1
 
-    def __init__(self, state_matrix):
+    def __init__(self, state_matrix, rows, columns, parent_id = -1, depth_level = 0):
         self.state_matrix = state_matrix
+        self.rows = rows
+        self.columns = columns
+        self.parent_id = parent_id
+        self.depth_level = depth_level
 
     def setID(self,id):
         self.id = id
 
-    def generateChildrenStates(self):
-        pass
+    def calculateHammingCost(self, target_state): # binary cost for every tile except 0
+        cost = 0
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if self.state_matrix[i][j] != 0:
+                    if self.state_matrix[i][j] != target_state[i][j]:
+                        cost += 1         
+        return cost
+
+    def calculateManhattanCost(self): # for every pair except 0
+        sum = 0
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if self.state_matrix[i][j] != 0:
+                    target_state = i * self.columns + j + 1
+                    if self.state_matrix[i][j] != target_state:
+                        #find the wanted state coordinates
+                        wanted_i = self.state_matrix[i][j] // self.columns
+                        wanted_j = (self.state_matrix[i][j] % self.columns) - 1 #callibrate index
+                        #exception for end of the row
+                        if wanted_j == -1:
+                            wanted_j = self.columns - 1
+                            wanted_i = wanted_i - 1
+                        sum += abs(i - wanted_i) + abs(j - wanted_j)
+        return sum
+
+    def checkStateIsTarget(self, target_state_matrix):
+        if self.state_matrix == target_state_matrix:
+            return True
+        else: 
+            return False
 
     
-
 
 def main():
 
@@ -42,6 +71,7 @@ def main():
     state = data["state"]
     state_matrix = generateMatrix(state, data["rows"], data["columns"])
     print(state_matrix)
+    print(find0Tile(state_matrix, data["rows"], data["columns"]))
     
     print(checkStateIsTarget(state_matrix, target_state_matrix))
 
@@ -51,8 +81,8 @@ def main():
         solveBfs(strategy_option, state)
     elif strategy == "dfs":
         solveDfs(strategy_option)
-    elif strategy == "astr":
-        solveAstar(strategy_option)
+    #elif strategy == "astr":
+     #   solveAstar(strategy_option, node)
     else:
         print("Wrong strategy name")
 
@@ -106,52 +136,60 @@ def solveBfs(strategy_option, state):
     strategy_option = list(strategy_option)
 
     frontier = []
-    visited = Set([])
+    explored = []
+    #visited = Set([])
 
 
 def solveDfs(strategy_option):
     frontier = []
+    explored = []
 
-def solveAstar(strategy_option):
-    frontier = []
-
-def generateStateByMoveChar(state, char, rows, columns, x_0, y_0):
-    if char == "U":
+def solveAstar(strategy_option, node):
+    if strategy_option == "manh":
         pass
-    elif char == "D":
-        pass
-    elif char == "L":
-        pass
-    elif char == "R":
+    if strategy_option == "hamm":
         pass
 
-def calculateHammingCost(state, target_state, rows, columns): # binary cost for every tile except 0
-    cost = 0
+def generateChildren(state_matrix):
+    rows = len(state_matrix)
+    columns = len(state_matrix[0])
+    i_0, j_0 = find0Tile(state_matrix, rows, columns)
+    children = {}
+    #up
+    if i_0 != 0:
+        state_matrix_up = state_matrix
+        state_matrix_up[i_0][j_0] = state_matrix[i_0 - 1][j_0]
+        state_matrix_up[i_0 - 1][j_0] = 0
+        children.update({"U":state_matrix_up})
+    #down
+    if i_0 != (rows - 1):
+        state_matrix_down = state_matrix
+        state_matrix_down[i_0][j_0] = state_matrix[i_0 + 1][j_0]
+        state_matrix_down[i_0 + 1][j_0] = 0
+        children.update({"D":state_matrix_down})
+    #left
+    if j_0 != 0:
+        state_matrix_left = state_matrix
+        state_matrix_left[i_0][j_0] = state_matrix[i_0][j_0 - 1]
+        state_matrix_left[i_0][j_0 - 1] = 0
+        children.update({"L":state_matrix_left})
+    #right
+    if j_0 != (columns - 1):
+        state_matrix_right = state_matrix
+        state_matrix_right[i_0][j_0] = state_matrix[i_0][j_0 + 1]
+        state_matrix_right[i_0][j_0 + 1] = 0
+        children.update({"R":state_matrix_right})
+    return children
+
+def find0Tile(state_matrix, rows, columns):
+    index = []
     for i in range(rows):
         for j in range(columns):
-            if state[i][j] != 0:
-                if state[i][j] != target_state[i][j]:
-                    cost += 1         
-    return cost
+            if state_matrix[i][j] == 0:   
+                index = [i,j]   
+    return index
 
-def calculateManhattanCost(state, target_state, rows, columns): # for every pair except 0
-    sum = 0
-    for i in range(rows):
-        for j in range(columns):
-            if state[i][j] != 0:
-                target_state = i*columns + j + 1
-                if state[i][j] != target_state:
-                    #find the wanted state coordinates
-                    wanted_i = state[i][j] // columns
-                    wanted_j = (state[i][j] % columns) - 1
-                    #exception for end of the row
-                    if wanted_j == -1:
-                        wanted_j = columns - 1
-                        wanted_i = wanted_i - 1
-                    sum += abs(i - wanted_i) + abs(j - wanted_j)
-    return sum
 
-                
 
 def saveSolution(solution_length, solution_trace):
     pass
