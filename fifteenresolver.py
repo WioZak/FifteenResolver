@@ -125,7 +125,7 @@ def generateStateByMoveChar(state, char, rows, columns, x_0, y_0):
     elif char == "R":
         pass
 
-def HammingCost(state, target_state, rows, columns): # binary cost for every tile except 0
+def calculateHammingCost(state, target_state, rows, columns): # binary cost for every tile except 0
     cost = 0
     for i in range(rows):
         for j in range(columns):
@@ -134,12 +134,24 @@ def HammingCost(state, target_state, rows, columns): # binary cost for every til
                     cost += 1         
     return cost
 
-def ManhattanCost(state, target_state, rows, columns): # for every pair except 0
+def calculateManhattanCost(state, target_state, rows, columns): # for every pair except 0
     sum = 0
     for i in range(rows):
         for j in range(columns):
             if state[i][j] != 0:
-                pass
+                target_state = i*columns + j + 1
+                if state[i][j] != target_state:
+                    #find the wanted state coordinates
+                    wanted_i = state[i][j] // columns
+                    wanted_j = (state[i][j] % columns) - 1
+                    #exception for end of the row
+                    if wanted_j == -1:
+                        wanted_j = columns - 1
+                        wanted_i = wanted_i - 1
+                    sum += abs(i - wanted_i) + abs(j - wanted_j)
+    return sum
+
+                
 
 def saveSolution(solution_length, solution_trace):
     pass
