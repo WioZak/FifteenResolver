@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+from copy import deepcopy
 
 class State(): # aka node
     id = 0
@@ -66,19 +67,19 @@ def main():
 
     target_state_matrix = generateTargetState(data["rows"], data["columns"])
 
-    print(target_state_matrix)
+    #print(target_state_matrix)
 
     state = data["state"]
     state_matrix = generateMatrix(state, data["rows"], data["columns"])
-    print(state_matrix)
-    print(find0Tile(state_matrix, data["rows"], data["columns"]))
+    #print(state_matrix)
+    #print(find0Tile(state_matrix, data["rows"], data["columns"]))
     
-    print(checkStateIsTarget(state_matrix, target_state_matrix))
+    #print(checkStateIsTarget(state_matrix, target_state_matrix))
 
 
     # check strategy
     if strategy == "bfs":
-        solveBfs(strategy_option, state)
+        solveBfs(strategy_option, state_matrix, target_state_matrix )
     elif strategy == "dfs":
         solveDfs(strategy_option)
     #elif strategy == "astr":
@@ -86,10 +87,6 @@ def main():
     else:
         print("Wrong strategy name")
 
-
-    # checkIfValidOption(strategy, strategy_option)
-
-    print(strategy, strategy_option, path_to_in_file) 
 
 def readDataFromFile(path_to_in_file):
     with open(path_to_in_file) as f:
@@ -106,7 +103,7 @@ def readDataFromFile(path_to_in_file):
     for i in range(1, data["rows"]*data["columns"]+1):
         data["state"].append(int(splitted[i+1]))
 
-    print("data: " + str(data))
+    #print("data: " + str(data))
     return data
 
 
@@ -126,25 +123,35 @@ def generateMatrix(vector, rows, columns):
         start_index += columns
     return matrix
 
-def checkStateIsTarget(state, target):
+def stateIsTarget(state, target):
     if state == target:
         return True
     else: 
         return False
 
-def solveBfs(strategy_option, state):
+def solveBfs(strategy_option, state_matrix, target_state_matrix):
     strategy_option = list(strategy_option)
-
     frontier = []
-    explored = []
-    #visited = Set([])
+    explored = set()
+
+    children = generateChildren(state_matrix)
+    print(children)
+
+    #while stateIsTarget(state_matrix, target_state_matrix) != True:
+    #    children = generateChildren(state_matrix)
+
+    print("bfs") 
+    return "found resolution"
+
 
 
 def solveDfs(strategy_option):
     frontier = []
-    explored = []
+    explored = set()
 
-def solveAstar(strategy_option, node):
+def solveAstar(strategy_option):
+    frontier = []
+    explored = set()
     if strategy_option == "manh":
         pass
     if strategy_option == "hamm":
@@ -157,25 +164,25 @@ def generateChildren(state_matrix):
     children = {}
     #up
     if i_0 != 0:
-        state_matrix_up = state_matrix
+        state_matrix_up = deepcopy(state_matrix)
         state_matrix_up[i_0][j_0] = state_matrix[i_0 - 1][j_0]
         state_matrix_up[i_0 - 1][j_0] = 0
         children.update({"U":state_matrix_up})
     #down
     if i_0 != (rows - 1):
-        state_matrix_down = state_matrix
+        state_matrix_down = deepcopy(state_matrix)
         state_matrix_down[i_0][j_0] = state_matrix[i_0 + 1][j_0]
         state_matrix_down[i_0 + 1][j_0] = 0
         children.update({"D":state_matrix_down})
     #left
     if j_0 != 0:
-        state_matrix_left = state_matrix
+        state_matrix_left = deepcopy(state_matrix)
         state_matrix_left[i_0][j_0] = state_matrix[i_0][j_0 - 1]
         state_matrix_left[i_0][j_0 - 1] = 0
         children.update({"L":state_matrix_left})
     #right
     if j_0 != (columns - 1):
-        state_matrix_right = state_matrix
+        state_matrix_right = deepcopy(state_matrix)
         state_matrix_right[i_0][j_0] = state_matrix[i_0][j_0 + 1]
         state_matrix_right[i_0][j_0 + 1] = 0
         children.update({"R":state_matrix_right})
@@ -189,7 +196,31 @@ def find0Tile(state_matrix, rows, columns):
                 index = [i,j]   
     return index
 
+def calculateHammingCost(state_matrix, target_state, rows, columns): # binary cost for every tile except 0
+    cost = 0
+    for i in range(rows):
+        for j in range(columns):
+            if state_matrix[i][j] != 0:
+                if state_matrix[i][j] != target_state[i][j]:
+                    cost += 1         
+    return cost
 
+def calculateManhattanCost(state_matrix, rows, columns): # for every pair except 0
+    sum = 0
+    for i in range(rows):
+        for j in range(columns):
+            if state_matrix[i][j] != 0:
+                target_state = i * columns + j + 1
+                if state_matrix[i][j] != target_state:
+                    #find the wanted state coordinates
+                    wanted_i = state_matrix[i][j] // columns
+                    wanted_j = (state_matrix[i][j] % columns) - 1 #callibrate index
+                    #exception for end of the row
+                    if wanted_j == -1:
+                        wanted_j = columns - 1
+                        wanted_i = wanted_i - 1
+                    sum += abs(i - wanted_i) + abs(j - wanted_j)
+    return sum
 
 def saveSolution(solution_length, solution_trace):
     pass
