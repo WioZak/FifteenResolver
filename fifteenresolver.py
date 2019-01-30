@@ -4,14 +4,15 @@ from copy import deepcopy
 
 class State(): # aka node
     children = {}  # {'u' : State()}
-    path = [] #this should be copied from a parent and appended with last move
+    #path = [] #this should be copied from a parent and appended with last move
 
-    def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None):
+    def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None, path = []):
         self.state_matrix = state_matrix
         self.rows = rows
         self.columns = columns
         self.depth_level = depth_level
         self.parent = parent
+        self.path = path
 
     def setID(self,id):
         self.id = id
@@ -62,6 +63,9 @@ class State(): # aka node
             self.__class__ == other.__class__ and
             self.state_matrix == other.state_matrix
         )
+
+    def addPathStep(self, char):
+        self.path.append(char)
 
 def main():
 
@@ -148,21 +152,34 @@ def solveBfs(strategy_option, root_state, target_state_matrix):
 
     frontier.append(root_state)
     current_state = frontier.pop(0)
-    print(current_state)
+
+    last_state = State()
 
     while stateIsTarget(current_state.state_matrix, target_state_matrix) != True:
         children_matrices = generateChildren(current_state)
         for symbol in strategy_option: 
-            if symbol in frontier:
-                frontier.append(State(children_matrices[symbol], current_state.rows, current_state.columns, current_state, current_state.depth_level + 1))
+            if symbol in children_matrices:
+                child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
+                                    current_state.depth_level + 1, current_state, deepcopy(current_state.path)) # todo: maybe slice instead of deepcopy
+                if child not in explored:
+                    child.addPathStep(symbol)
+                    frontier.append(child) 
         explored.add(current_state)
+        # print("frontier")
+        # for obj in frontier:
+        #     print(obj.state_matrix, obj.path)
         if frontier != []:
             current_state = frontier.pop(0) #next state to check
+            last_state = current_state
         else:
             return "cannot find solution"
 
-    print("bfs") 
-    return "found resolution"
+    # for obj in explored:
+    #     print(obj.state_matrix, obj.path)
+    print(root_state.state_matrix)
+    print(last_state.state_matrix, last_state.depth_level, last_state.path)
+    print("found solution for bfs") 
+    return last_state
 
 
 
@@ -217,31 +234,31 @@ def find0Tile(state_matrix, rows, columns):
                 index = [i,j]   
     return index
 
-def calculateHammingCost(state_matrix, target_state, rows, columns): # binary cost for every tile except 0
-    cost = 0
-    for i in range(rows):
-        for j in range(columns):
-            if state_matrix[i][j] != 0:
-                if state_matrix[i][j] != target_state[i][j]:
-                    cost += 1         
-    return cost
+# def calculateHammingCost(state_matrix, target_state, rows, columns): # binary cost for every tile except 0
+#     cost = 0
+#     for i in range(rows):
+#         for j in range(columns):
+#             if state_matrix[i][j] != 0:
+#                 if state_matrix[i][j] != target_state[i][j]:
+#                     cost += 1         
+#     return cost
 
-def calculateManhattanCost(state_matrix, rows, columns): # for every pair except 0
-    sum = 0
-    for i in range(rows):
-        for j in range(columns):
-            if state_matrix[i][j] != 0:
-                target_state = i * columns + j + 1
-                if state_matrix[i][j] != target_state:
-                    #find the wanted state coordinates
-                    wanted_i = state_matrix[i][j] // columns
-                    wanted_j = (state_matrix[i][j] % columns) - 1 #callibrate index
-                    #exception for end of the row
-                    if wanted_j == -1:
-                        wanted_j = columns - 1
-                        wanted_i = wanted_i - 1
-                    sum += abs(i - wanted_i) + abs(j - wanted_j)
-    return sum
+# def calculateManhattanCost(state_matrix, rows, columns): # for every pair except 0
+#     sum = 0
+#     for i in range(rows):
+#         for j in range(columns):
+#             if state_matrix[i][j] != 0:
+#                 target_state = i * columns + j + 1
+#                 if state_matrix[i][j] != target_state:
+#                     #find the wanted state coordinates
+#                     wanted_i = state_matrix[i][j] // columns
+#                     wanted_j = (state_matrix[i][j] % columns) - 1 #callibrate index
+#                     #exception for end of the row
+#                     if wanted_j == -1:
+#                         wanted_j = columns - 1
+#                         wanted_i = wanted_i - 1
+#                     sum += abs(i - wanted_i) + abs(j - wanted_j)
+#     return sum
 
 def saveSolution(solution_length, solution_trace):
     pass
