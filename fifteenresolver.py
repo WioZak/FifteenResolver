@@ -4,7 +4,6 @@ from copy import deepcopy
 
 class State(): # aka node
     id = 0
-    state_matrix = []
     children = {}  # {'u' : State()}
     path = [] #this should be copied from a parent and appended with last move
 
@@ -49,8 +48,21 @@ class State(): # aka node
             return True
         else: 
             return False
-
     
+    def stateMatrix(self):
+        return self.state_matrix
+
+    def addChildren(self, children):
+        self.children = children
+
+    def __hash__(self):
+        return hash(self.state_matrix) #??? check if OK
+
+    def __eq__(self, other):
+        return (
+            self.__class__ == other.__class__ and
+            self.state_matrix == other.state_matrix
+        )
 
 def main():
 
@@ -68,8 +80,10 @@ def main():
 
     #print(target_state_matrix)
 
-    state = data["state"]
-    state_matrix = generateMatrix(state, data["rows"], data["columns"])
+    state_data = data["state"]
+    state_matrix = generateMatrix(state_data, data["rows"], data["columns"])
+
+    root_state = State(state_matrix, data["rows"], data["columns"])
     #print(state_matrix)
     #print(find0Tile(state_matrix, data["rows"], data["columns"]))
     
@@ -78,7 +92,7 @@ def main():
 
     # check strategy
     if strategy == "bfs":
-        solveBfs(strategy_option, state_matrix, target_state_matrix )
+        solveBfs(strategy_option, root_state, target_state_matrix)
     elif strategy == "dfs":
         solveDfs(strategy_option)
     #elif strategy == "astr":
@@ -128,22 +142,23 @@ def stateIsTarget(state, target):
     else: 
         return False
 
-def solveBfs(strategy_option, state_matrix, target_state_matrix):
+def solveBfs(strategy_option, root_state, target_state_matrix):
     strategy_option = list(strategy_option)
     frontier = []
     explored = set()
 
-    frontier.append(state_matrix)
-    current_state_matrix = frontier.pop(0)
-    print(current_state_matrix)
+    frontier.append(root_state)
+    current_state = frontier.pop(0)
+    print(current_state)
 
-    while stateIsTarget(current_state_matrix, target_state_matrix) != True:
-        children = generateChildren(current_state_matrix)
-        for symbol in strategy_option:
-            frontier.append(children[symbol])
-        explored.add(current_state_matrix)
+    while stateIsTarget(current_state.state_matrix, target_state_matrix) != True:
+        children = generateChildren(current_state)
+        for symbol in strategy_option: 
+            if symbol in frontier:
+                frontier.append(children[symbol])
+        explored.add(current_state)
         if frontier != []:
-            current_state_matrix = frontier.pop(0) #next state to check
+            current_state = frontier.pop(0) #next state to check
         else:
             return "cannot find solution"
 
@@ -164,33 +179,33 @@ def solveAstar(strategy_option):
     if strategy_option == "hamm":
         pass
 
-def generateChildren(state_matrix):
-    rows = len(state_matrix)
-    columns = len(state_matrix[0])
-    i_0, j_0 = find0Tile(state_matrix, rows, columns)
+def generateChildren(state):
+    rows = len(state.state_matrix)
+    columns = len(state.state_matrix[0])
+    i_0, j_0 = find0Tile(state.state_matrix, rows, columns)
     children = {}
     #up
     if i_0 != 0:
-        state_matrix_up = deepcopy(state_matrix)
-        state_matrix_up[i_0][j_0] = state_matrix[i_0 - 1][j_0]
+        state_matrix_up = deepcopy(state.state_matrix)
+        state_matrix_up[i_0][j_0] = state.state_matrix[i_0 - 1][j_0]
         state_matrix_up[i_0 - 1][j_0] = 0
         children.update({"U":state_matrix_up})
     #down
     if i_0 != (rows - 1):
-        state_matrix_down = deepcopy(state_matrix)
-        state_matrix_down[i_0][j_0] = state_matrix[i_0 + 1][j_0]
+        state_matrix_down = deepcopy(state.state_matrix)
+        state_matrix_down[i_0][j_0] = state.state_matrix[i_0 + 1][j_0]
         state_matrix_down[i_0 + 1][j_0] = 0
         children.update({"D":state_matrix_down})
     #left
     if j_0 != 0:
-        state_matrix_left = deepcopy(state_matrix)
-        state_matrix_left[i_0][j_0] = state_matrix[i_0][j_0 - 1]
+        state_matrix_left = deepcopy(state.state_matrix)
+        state_matrix_left[i_0][j_0] = state.state_matrix[i_0][j_0 - 1]
         state_matrix_left[i_0][j_0 - 1] = 0
         children.update({"L":state_matrix_left})
     #right
     if j_0 != (columns - 1):
-        state_matrix_right = deepcopy(state_matrix)
-        state_matrix_right[i_0][j_0] = state_matrix[i_0][j_0 + 1]
+        state_matrix_right = deepcopy(state.state_matrix)
+        state_matrix_right[i_0][j_0] = state.state_matrix[i_0][j_0 + 1]
         state_matrix_right[i_0][j_0 + 1] = 0
         children.update({"R":state_matrix_right})
     return children
