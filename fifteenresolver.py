@@ -5,7 +5,7 @@ from copy import deepcopy
 class State(): # aka node
     children = {}  # {'U' : State()}
 
-    def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None, path = []):
+    def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None, path = []): #todo check if parent is needed
         self.state_matrix = state_matrix
         self.rows = rows
         self.columns = columns
@@ -163,8 +163,6 @@ def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
     print(last_state.state_matrix, last_state.depth_level, last_state.path)
     print("found solution for bfs") 
     return last_state
-
-
 
 def solveDfs(strategy_option, root_state, target_state_matrix): # LIFO approach
     strategy_option = list(strategy_option)
