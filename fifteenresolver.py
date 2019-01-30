@@ -3,8 +3,7 @@ import numpy as np
 from copy import deepcopy
 
 class State(): # aka node
-    children = {}  # {'u' : State()}
-    #path = [] #this should be copied from a parent and appended with last move
+    children = {}  # {'U' : State()}
 
     def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None, path = []):
         self.state_matrix = state_matrix
@@ -81,25 +80,19 @@ def main():
 
     target_state_matrix = generateTargetState(data["rows"], data["columns"])
 
-    #print(target_state_matrix)
-
     state_data = data["state"]
     state_matrix = generateMatrix(state_data, data["rows"], data["columns"])
 
     root_state = State(state_matrix, data["rows"], data["columns"])
-    #print(state_matrix)
-    #print(find0Tile(state_matrix, data["rows"], data["columns"]))
-    
-    #print(checkStateIsTarget(state_matrix, target_state_matrix))
 
 
     # check strategy
     if strategy == "bfs":
         solveBfs(strategy_option, root_state, target_state_matrix)
     elif strategy == "dfs":
-        solveDfs(strategy_option)
-    #elif strategy == "astr":
-     #   solveAstar(strategy_option, node)
+        solveDfs(strategy_option, root_state, target_state_matrix)
+    elif strategy == "astr":
+        solveAstar(strategy_option, root_state, target_state_matrix)
     else:
         print("Wrong strategy name")
 
@@ -118,8 +111,6 @@ def readDataFromFile(path_to_in_file):
 
     for i in range(1, data["rows"]*data["columns"]+1):
         data["state"].append(int(splitted[i+1]))
-
-    #print("data: " + str(data))
     return data
 
 
@@ -145,37 +136,29 @@ def stateIsTarget(state, target):
     else: 
         return False
 
-def solveBfs(strategy_option, root_state, target_state_matrix):
+def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
     strategy_option = list(strategy_option)
     frontier = []
     explored = set()
 
-    frontier.append(root_state)
-    current_state = frontier.pop(0)
-
-    last_state = State()
+    current_state = root_state
 
     while stateIsTarget(current_state.state_matrix, target_state_matrix) != True:
         children_matrices = generateChildren(current_state)
         for symbol in strategy_option: 
             if symbol in children_matrices:
                 child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
-                                    current_state.depth_level + 1, current_state, deepcopy(current_state.path)) # todo: maybe slice instead of deepcopy
+                                    current_state.depth_level + 1, current_state, current_state.path[:])
                 if child not in explored:
                     child.addPathStep(symbol)
                     frontier.append(child) 
         explored.add(current_state)
-        # print("frontier")
-        # for obj in frontier:
-        #     print(obj.state_matrix, obj.path)
         if frontier != []:
             current_state = frontier.pop(0) #next state to check
             last_state = current_state
         else:
             return "cannot find solution"
 
-    # for obj in explored:
-    #     print(obj.state_matrix, obj.path)
     print(root_state.state_matrix)
     print(last_state.state_matrix, last_state.depth_level, last_state.path)
     print("found solution for bfs") 
@@ -183,11 +166,36 @@ def solveBfs(strategy_option, root_state, target_state_matrix):
 
 
 
-def solveDfs(strategy_option):
+def solveDfs(strategy_option, root_state, target_state_matrix): # LIFO approach
+    strategy_option = list(strategy_option)
     frontier = []
     explored = set()
 
-def solveAstar(strategy_option):
+    current_state = root_state
+
+    count = 100000 # big number
+    while (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and count > 0: #different than bfs
+        children_matrices = generateChildren(current_state)
+        for symbol in strategy_option[::-1]: #different than bfs
+            if symbol in children_matrices:
+                child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
+                                    current_state.depth_level + 1, current_state, current_state.path[:]) 
+                if child not in explored:
+                    child.addPathStep(symbol)
+                    frontier.append(child) 
+        explored.add(current_state)
+        if frontier != []:
+            current_state = frontier.pop()  #different than bfs
+            last_state = current_state
+        else:
+            return "cannot find solution"
+        count -= 1 #different than bfs
+    print(root_state.state_matrix)
+    print(last_state.state_matrix, last_state.depth_level, last_state.path)
+    print("found solution for dfs") 
+    return last_state
+
+def solveAstar(strategy_option, root_state, target_state_matrix):
     frontier = []
     explored = set()
     if strategy_option == "manh":
@@ -234,39 +242,12 @@ def find0Tile(state_matrix, rows, columns):
                 index = [i,j]   
     return index
 
-# def calculateHammingCost(state_matrix, target_state, rows, columns): # binary cost for every tile except 0
-#     cost = 0
-#     for i in range(rows):
-#         for j in range(columns):
-#             if state_matrix[i][j] != 0:
-#                 if state_matrix[i][j] != target_state[i][j]:
-#                     cost += 1         
-#     return cost
-
-# def calculateManhattanCost(state_matrix, rows, columns): # for every pair except 0
-#     sum = 0
-#     for i in range(rows):
-#         for j in range(columns):
-#             if state_matrix[i][j] != 0:
-#                 target_state = i * columns + j + 1
-#                 if state_matrix[i][j] != target_state:
-#                     #find the wanted state coordinates
-#                     wanted_i = state_matrix[i][j] // columns
-#                     wanted_j = (state_matrix[i][j] % columns) - 1 #callibrate index
-#                     #exception for end of the row
-#                     if wanted_j == -1:
-#                         wanted_j = columns - 1
-#                         wanted_i = wanted_i - 1
-#                     sum += abs(i - wanted_i) + abs(j - wanted_j)
-#     return sum
 
 def saveSolution(solution_length, solution_trace):
     pass
 
 def saveStats(solution_length, visited_states_count, checked_states_count, max_recursion_depth, time):
     pass
-
-
 
 
 if __name__ == "__main__":
