@@ -3,16 +3,15 @@ import numpy as np
 from copy import deepcopy
 
 class State(): # aka node
-    id = 0
     children = {}  # {'u' : State()}
     path = [] #this should be copied from a parent and appended with last move
 
-    def __init__(self, state_matrix, rows, columns, parent_id = -1, depth_level = 0):
+    def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None):
         self.state_matrix = state_matrix
         self.rows = rows
         self.columns = columns
-        self.parent_id = parent_id
         self.depth_level = depth_level
+        self.parent = parent
 
     def setID(self,id):
         self.id = id
@@ -56,7 +55,7 @@ class State(): # aka node
         self.children = children
 
     def __hash__(self):
-        return hash(self.state_matrix) #??? check if OK
+        return hash(str(self.state_matrix))
 
     def __eq__(self, other):
         return (
@@ -152,10 +151,10 @@ def solveBfs(strategy_option, root_state, target_state_matrix):
     print(current_state)
 
     while stateIsTarget(current_state.state_matrix, target_state_matrix) != True:
-        children = generateChildren(current_state)
+        children_matrices = generateChildren(current_state)
         for symbol in strategy_option: 
             if symbol in frontier:
-                frontier.append(children[symbol])
+                frontier.append(State(children_matrices[symbol], current_state.rows, current_state.columns, current_state, current_state.depth_level + 1))
         explored.add(current_state)
         if frontier != []:
             current_state = frontier.pop(0) #next state to check
