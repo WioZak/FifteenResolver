@@ -5,9 +5,8 @@ from copy import deepcopy
 class State(): # aka node
     id = 0
     state_matrix = []
-    children = {}  # {'u' : Node()}
-    possible_moves = []
-    path = []
+    children = {}  # {'u' : State()}
+    path = [] #this should be copied from a parent and appended with last move
 
     def __init__(self, state_matrix, rows, columns, parent_id = -1, depth_level = 0):
         self.state_matrix = state_matrix
@@ -56,8 +55,8 @@ class State(): # aka node
 def main():
 
     if len(sys.argv) == 4:
-        strategy = sys.argv[1]
-        strategy_option = sys.argv[2]
+        strategy = sys.argv[1].lower()
+        strategy_option = sys.argv[2].upper()
         path_to_in_file = sys.argv[3]
         
     else:
@@ -134,11 +133,19 @@ def solveBfs(strategy_option, state_matrix, target_state_matrix):
     frontier = []
     explored = set()
 
-    children = generateChildren(state_matrix)
-    print(children)
+    frontier.append(state_matrix)
+    current_state_matrix = frontier.pop(0)
+    print(current_state_matrix)
 
-    #while stateIsTarget(state_matrix, target_state_matrix) != True:
-    #    children = generateChildren(state_matrix)
+    while stateIsTarget(current_state_matrix, target_state_matrix) != True:
+        children = generateChildren(current_state_matrix)
+        for symbol in strategy_option:
+            frontier.append(children[symbol])
+        explored.add(current_state_matrix)
+        if frontier != []:
+            current_state_matrix = frontier.pop(0) #next state to check
+        else:
+            return "cannot find solution"
 
     print("bfs") 
     return "found resolution"
