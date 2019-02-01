@@ -5,28 +5,19 @@ from copy import deepcopy
 class State(): # aka node
     children = {}  # {'U' : State()}
 
-    def __init__(self, state_matrix = None, rows = 0, columns = 0, depth_level = 0, parent = None, path = []): #todo check if parent is needed
+    def __init__(self, state_matrix = None, rows = 0, columns = 0, parent = None, path = []): #todo check if parent is needed
         self.state_matrix = state_matrix
         self.rows = rows
         self.columns = columns
-        self.depth_level = depth_level
+        #self.depth_level = depth_level
         self.parent = parent
         self.path = path
-
-    def setID(self,id):
-        self.id = id
 
     def checkStateIsTarget(self, target_state_matrix):
         if self.state_matrix == target_state_matrix:
             return True
         else: 
             return False
-    
-    def stateMatrix(self):
-        return self.state_matrix
-
-    def addChildren(self, children):
-        self.children = children
 
     def __hash__(self):
         return hash(str(self.state_matrix))
@@ -61,17 +52,19 @@ def main():
 
     root_state = State(state_matrix, data["rows"], data["columns"])
 
-
     # check strategy
     if strategy == "bfs":
-        solveBfs(strategy_option, root_state, target_state_matrix)
+        solution = solveBfs(strategy_option, root_state, target_state_matrix)
     elif strategy == "dfs":
-        solveDfs(strategy_option, root_state, target_state_matrix, max_depth)
+        solution = solveDfs(strategy_option, root_state, target_state_matrix, max_depth)
     elif strategy == "astr":
-        solveAstar(strategy_option, root_state, target_state_matrix)
+        solution = solveAstar(strategy_option, root_state, target_state_matrix)
     else:
         print("Wrong strategy name")
 
+    saveSolution(len(solution.path), solution.path)
+
+    # saveStats()
 
 def readDataFromFile(path_to_in_file):
     with open(path_to_in_file) as f:
@@ -88,7 +81,6 @@ def readDataFromFile(path_to_in_file):
     for i in range(1, data["rows"]*data["columns"]+1):
         data["state"].append(int(splitted[i+1]))
     return data
-
 
 def generateTargetState(rows, columns):
     target_state = []
@@ -124,7 +116,7 @@ def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
         for symbol in strategy_option: 
             if symbol in children_matrices:
                 child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
-                                    current_state.depth_level + 1, current_state, current_state.path[:])
+                                    current_state, current_state.path[:])
                 if child not in explored:
                     child.addPathStep(symbol)
                     frontier.append(child) 
@@ -134,9 +126,6 @@ def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
             last_state = current_state
         else:
             return "cannot find solution"
-
-    print(root_state.state_matrix)
-    print(last_state.state_matrix, last_state.depth_level, last_state.path)
     print("found solution for bfs") 
     return last_state
 
@@ -147,13 +136,13 @@ def solveDfs(strategy_option, root_state, target_state_matrix, max_depth): # LIF
 
     current_state = root_state
 
-    counter = max_depth # big number
+    counter = max_depth + 1 # big number to avoid dfs cannot find solution 
     while (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and counter > 0: #different than bfs
         children_matrices = generateChildren(current_state)
         for symbol in strategy_option[::-1]: #different than bfs
             if symbol in children_matrices:
                 child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
-                                    current_state.depth_level + 1, current_state, current_state.path[:]) 
+                                    current_state, current_state.path[:]) 
                 if child not in explored:
                     child.addPathStep(symbol)
                     frontier.append(child) 
@@ -164,8 +153,6 @@ def solveDfs(strategy_option, root_state, target_state_matrix, max_depth): # LIF
         else:
             return "cannot find solution"
         counter -= 1 #different than bfs
-    print(root_state.state_matrix)
-    print(last_state.state_matrix, last_state.depth_level, last_state.path)
     print("found solution for dfs") 
     return last_state
 
@@ -180,7 +167,7 @@ def solveAstar(strategy_option, root_state, target_state_matrix): #best first
         sorted_keys = orderChildren(strategy_option, children_matrices, current_state.rows, current_state.columns)
         for sorted_key in sorted_keys:
             child = State(children_matrices[sorted_key[0]], current_state.rows, current_state.columns, 
-                                current_state.depth_level + 1, current_state, current_state.path[:])
+                                current_state, current_state.path[:])
             if child not in explored:
                 child.addPathStep(sorted_key[0])
                 frontier.append(child) 
@@ -190,9 +177,6 @@ def solveAstar(strategy_option, root_state, target_state_matrix): #best first
             last_state = current_state
         else:
             return "cannot find solution"
-
-    print(root_state.state_matrix)
-    print(last_state.state_matrix, last_state.depth_level, last_state.path)
     print("found solution for astar") 
     return last_state
 
@@ -202,16 +186,11 @@ def orderChildren(strategy_option, children_matrices, rows, columns):
         if strategy_option == "HAMM":
             state_cost = calculateHammingCost(children_matrices[key], rows, columns)
             order[key] = state_cost
-            #print(key, children_matrices[key], calculateHammingCost(children_matrices[key], rows, columns))
         elif strategy_option == "MANH":
             state_cost = calculateManhattanCost(children_matrices[key], rows, columns)
             order[key] = state_cost
-            #print(key, children_matrices[key], calculateManhattanCost(children_matrices[key], rows, columns))
-    #print(order)
     sorted_order = [(k, order[k]) for k in sorted(order, key=order.get)]
-    #print("sorted", sorted_order)
     return sorted_order
-
 
 def calculateHammingCost(state_matrix, rows, columns): # binary cost for every tile except 0		 
     cost = 0		
@@ -220,12 +199,10 @@ def calculateHammingCost(state_matrix, rows, columns): # binary cost for every t
             if state_matrix[i][j] != 0:	
                 target_state = i * columns + j + 1	
                 if state_matrix[i][j] != target_state:
-                    #print("state", state_matrix[i][j], "target", target_state)	
                     cost += 1         	       
     return cost	
 
- 
-def calculateManhattanCost(state_matrix, rows, columns): # for every pair except 0		
+def calculateManhattanCost(state_matrix, rows, columns): # manh distance for every tile except 0		
     sum = 0		
     for i in range(rows):	
         for j in range(columns):	
@@ -240,9 +217,7 @@ def calculateManhattanCost(state_matrix, rows, columns): # for every pair except
                         wanted_j = columns - 1		
                         wanted_i = wanted_i - 1	
                     sum += abs(i - wanted_i) + abs(j - wanted_j)
-                    #print("state", state_matrix[i][j], "target", target_state, "odl", abs(i - wanted_i) + abs(j - wanted_j))		
     return sum
-
 
 def generateChildren(state):
     rows = len(state.state_matrix)
@@ -283,13 +258,11 @@ def find0Tile(state_matrix, rows, columns):
                 index = [i,j]   
     return index
 
-
-def saveSolution(solution_length, solution_trace):
-    pass
+def saveSolution(solution_length, solution_path):
+    print(solution_length, solution_path)
 
 def saveStats(solution_length, visited_states_count, checked_states_count, max_recursion_depth, time):
     pass
-
 
 if __name__ == "__main__":
     main()
