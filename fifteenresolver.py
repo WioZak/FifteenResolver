@@ -16,32 +16,6 @@ class State(): # aka node
     def setID(self,id):
         self.id = id
 
-    def calculateHammingCost(self, target_state): # binary cost for every tile except 0
-        cost = 0
-        for i in range(self.rows):
-            for j in range(self.columns):
-                if self.state_matrix[i][j] != 0:
-                    if self.state_matrix[i][j] != target_state[i][j]:
-                        cost += 1         
-        return cost
-
-    def calculateManhattanCost(self): # for every pair except 0
-        sum = 0
-        for i in range(self.rows):
-            for j in range(self.columns):
-                if self.state_matrix[i][j] != 0:
-                    target_state = i * self.columns + j + 1
-                    if self.state_matrix[i][j] != target_state:
-                        #find the wanted state coordinates
-                        wanted_i = self.state_matrix[i][j] // self.columns
-                        wanted_j = (self.state_matrix[i][j] % self.columns) - 1 #callibrate index
-                        #exception for end of the row
-                        if wanted_j == -1:
-                            wanted_j = self.columns - 1
-                            wanted_i = wanted_i - 1
-                        sum += abs(i - wanted_i) + abs(j - wanted_j)
-        return sum
-
     def checkStateIsTarget(self, target_state_matrix):
         if self.state_matrix == target_state_matrix:
             return True
@@ -68,6 +42,8 @@ class State(): # aka node
 
 def main():
 
+    max_depth = 10000
+
     if len(sys.argv) == 4:
         strategy = sys.argv[1].lower()
         strategy_option = sys.argv[2].upper()
@@ -90,7 +66,7 @@ def main():
     if strategy == "bfs":
         solveBfs(strategy_option, root_state, target_state_matrix)
     elif strategy == "dfs":
-        solveDfs(strategy_option, root_state, target_state_matrix)
+        solveDfs(strategy_option, root_state, target_state_matrix, max_depth)
     elif strategy == "astr":
         solveAstar(strategy_option, root_state, target_state_matrix)
     else:
@@ -164,15 +140,15 @@ def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
     print("found solution for bfs") 
     return last_state
 
-def solveDfs(strategy_option, root_state, target_state_matrix): # LIFO approach
+def solveDfs(strategy_option, root_state, target_state_matrix, max_depth): # LIFO approach
     strategy_option = list(strategy_option)
     frontier = []
     explored = set()
 
     current_state = root_state
 
-    count = 100000 # big number
-    while (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and count > 0: #different than bfs
+    counter = max_depth # big number
+    while (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and counter > 0: #different than bfs
         children_matrices = generateChildren(current_state)
         for symbol in strategy_option[::-1]: #different than bfs
             if symbol in children_matrices:
@@ -187,19 +163,86 @@ def solveDfs(strategy_option, root_state, target_state_matrix): # LIFO approach
             last_state = current_state
         else:
             return "cannot find solution"
-        count -= 1 #different than bfs
+        counter -= 1 #different than bfs
     print(root_state.state_matrix)
     print(last_state.state_matrix, last_state.depth_level, last_state.path)
     print("found solution for dfs") 
     return last_state
 
-def solveAstar(strategy_option, root_state, target_state_matrix):
+def solveAstar(strategy_option, root_state, target_state_matrix): #best first
     frontier = []
     explored = set()
-    if strategy_option == "manh":
-        pass
-    if strategy_option == "hamm":
-        pass
+
+    current_state = root_state
+
+    while stateIsTarget(current_state.state_matrix, target_state_matrix) != True:
+        children_matrices = generateChildren(current_state)
+        sorted_keys = orderChildren(strategy_option, children_matrices, current_state.rows, current_state.columns)
+        for sorted_key in sorted_keys:
+            child = State(children_matrices[sorted_key[0]], current_state.rows, current_state.columns, 
+                                current_state.depth_level + 1, current_state, current_state.path[:])
+            if child not in explored:
+                child.addPathStep(sorted_key[0])
+                frontier.append(child) 
+        explored.add(current_state)
+        if frontier != []:
+            current_state = frontier.pop(0) #next state to check
+            last_state = current_state
+        else:
+            return "cannot find solution"
+
+    print(root_state.state_matrix)
+    print(last_state.state_matrix, last_state.depth_level, last_state.path)
+    print("found solution for astar") 
+    return last_state
+
+def orderChildren(strategy_option, children_matrices, rows, columns):
+    order = {}
+    for key in children_matrices:
+        if strategy_option == "HAMM":
+            state_cost = calculateHammingCost(children_matrices[key], rows, columns)
+            order[key] = state_cost
+            #print(key, children_matrices[key], calculateHammingCost(children_matrices[key], rows, columns))
+        elif strategy_option == "MANH":
+            state_cost = calculateManhattanCost(children_matrices[key], rows, columns)
+            order[key] = state_cost
+            #print(key, children_matrices[key], calculateManhattanCost(children_matrices[key], rows, columns))
+    #print(order)
+    sorted_order = [(k, order[k]) for k in sorted(order, key=order.get)]
+    #print("sorted", sorted_order)
+    return sorted_order
+
+
+def calculateHammingCost(state_matrix, rows, columns): # binary cost for every tile except 0		 
+    cost = 0		
+    for i in range(rows):		
+        for j in range(columns):
+            if state_matrix[i][j] != 0:	
+                target_state = i * columns + j + 1	
+                if state_matrix[i][j] != target_state:
+                    #print("state", state_matrix[i][j], "target", target_state)	
+                    cost += 1         	       
+    return cost	
+
+ 
+def calculateManhattanCost(state_matrix, rows, columns): # for every pair except 0		
+    sum = 0		
+    for i in range(rows):	
+        for j in range(columns):	
+            if state_matrix[i][j] != 0:		
+                target_state = i * columns + j + 1		
+                if state_matrix[i][j] != target_state:  			
+                    #find the wanted state coordinates		
+                    wanted_i = state_matrix[i][j] // columns	
+                    wanted_j = (state_matrix[i][j] % columns) - 1 #callibrate index	
+                    #exception for end of the row		
+                    if wanted_j == -1:		
+                        wanted_j = columns - 1		
+                        wanted_i = wanted_i - 1	
+                    sum += abs(i - wanted_i) + abs(j - wanted_j)
+                    #print("state", state_matrix[i][j], "target", target_state, "odl", abs(i - wanted_i) + abs(j - wanted_j))		
+    return sum
+
 
 def generateChildren(state):
     rows = len(state.state_matrix)
