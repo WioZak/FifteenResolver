@@ -1,8 +1,8 @@
 import sys
-import numpy as np
 from copy import deepcopy
 import time
 import os
+import re
 
 class State(): # aka node
     visited_states_count = 0
@@ -36,16 +36,15 @@ class State(): # aka node
         self.path.append(char)
 
 def main():
-
     max_possible_depth = 20
 
     if len(sys.argv) == 4:
         strategy = sys.argv[1].lower()
         strategy_option = sys.argv[2].upper()
-        path_to_in_file = sys.argv[3]
-        
+        path_to_in_file = sys.argv[3] 
     else:
         print("Wrong number of arguments!")
+        sys.exit()
 
     data = readDataFromFile(path_to_in_file)
 
@@ -53,7 +52,7 @@ def main():
 
     state_data = data["state"]
     state_matrix = generateMatrix(state_data, data["rows"], data["columns"])
-
+    #initialize first state
     root_state = State(state_matrix, data["rows"], data["columns"])
 
     # check strategy
@@ -67,9 +66,11 @@ def main():
     else:
         print("Wrong strategy name")
     end = time.time()
-    saveSolution(solution.solution_length, solution.path, strategy, strategy_option.lower(), path_to_in_file)
-    solution_time = end-start
 
+    #save statistics
+    saveSolution(solution.solution_length, solution.path, strategy, strategy_option.lower(), path_to_in_file)
+
+    solution_time = end-start
     saveStats(solution.solution_length, solution.visited_states_count, solution.explored_states_count, 
             State.max_achieved_depth, solution_time, strategy, strategy_option.lower(), path_to_in_file)
 
@@ -296,6 +297,10 @@ def saveSolution(solution_length, solution_path, strategy, strategy_option, path
     dir_name = "solutions"
     makeDir(dir_name)
 
+    #for batchresolver
+    regex = re.compile(r"[0-9][x][0-9]_[0-9]+_[0-9]+.txt")
+    path_to_in_file = regex.findall(path_to_in_file)[0]
+
     f = open(dir_name + "/" + path_to_in_file + "_" + strategy + "_" + strategy_option + "_sol.txt", 'w')
     f.write(str(solution_length))
     if solution_length != -1:
@@ -306,6 +311,10 @@ def saveStats(solution_length, visited_states_count, explored_states_count, max_
                                             time, strategy, strategy_option, path_to_in_file):
     dir_name = "stats"
     makeDir(dir_name)
+
+    #for batchresolver
+    regex = re.compile(r"[0-9][x][0-9]_[0-9]+_[0-9]+.txt")
+    path_to_in_file = regex.findall(path_to_in_file)[0]
 
     f = open(dir_name + "/" + path_to_in_file + "_" + strategy + "_" + strategy_option + "_stats.txt", 'w')
     f.write(str(solution_length) + "\n" + str(visited_states_count) + "\n" + str(explored_states_count) + "\n" 
