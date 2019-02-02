@@ -149,7 +149,7 @@ def solveDfs(strategy_option, root_state, target_state_matrix, max_possible_dept
 
     current_state = root_state
 
-    counter = 1000000 # big number to avoid dfs cannot find solution 
+    counter = 1000000 # big number to avoid dfs cannot find solution, max visited states
     while (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and counter > 0: #different than bfs
         children_matrices = generateChildren(current_state)
         for symbol in strategy_option[::-1]: #different than bfs
@@ -309,7 +309,7 @@ def saveStats(solution_length, visited_states_count, explored_states_count, max_
 
     f = open(dir_name + "/" + path_to_in_file + "_" + strategy + "_" + strategy_option + "_stats.txt", 'w')
     f.write(str(solution_length) + "\n" + str(visited_states_count) + "\n" + str(explored_states_count) + "\n" 
-                                            + str(max_achieved_depth) + "\n" + str(time))
+                                            + str(max_achieved_depth) + "\n" + str("{0:.3f}".format(time*1000)))
     f.close()
 
 def makeDir(dir_name):
