@@ -9,19 +9,12 @@ class State(): # aka node
     explored_states_count = 0
     max_achieved_depth = 0 # shared variable
 
-    def __init__(self, state_matrix = None, rows = 0, columns = 0, parent = None, path = [], solution_length = 0):
+    def __init__(self, state_matrix = None, rows = 0, columns = 0, path = [], solution_length = 0):
         self.state_matrix = state_matrix
         self.rows = rows
         self.columns = columns
-        self.parent = parent
         self.path = path
         self.solution_length = solution_length
-
-    def checkStateIsTarget(self, target_state_matrix):
-        if self.state_matrix == target_state_matrix:
-            return True
-        else: 
-            return False
 
     def __hash__(self):
         return hash(str(self.state_matrix))
@@ -48,21 +41,26 @@ def main():
 
     data = readDataFromFile(path_to_in_file)
 
-    target_state_matrix = generateTargetState(data["rows"], data["columns"])
+    #helper for 4x4
+    if (data["rows"] == 4 and data["columns"] == 4):
+        target_state_matrix = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,0]]
+    else:
+        target_state_matrix = generateTargetState(data["rows"], data["columns"])
 
+
+    #initialize first state
     state_data = data["state"]
     state_matrix = generateMatrix(state_data, data["rows"], data["columns"])
-    #initialize first state
     root_state = State(state_matrix, data["rows"], data["columns"])
 
     # check strategy
     start = time.time()
-    if strategy == "bfs":
-        solution = solveBfs(strategy_option, root_state, target_state_matrix)
+    if strategy == "astr":
+        solution = solveAstar(strategy_option, root_state, target_state_matrix)
     elif strategy == "dfs":
         solution = solveDfs(strategy_option, root_state, target_state_matrix, max_possible_depth)
-    elif strategy == "astr":
-        solution = solveAstar(strategy_option, root_state, target_state_matrix)
+    elif strategy == "bfs":
+        solution = solveBfs(strategy_option, root_state, target_state_matrix)
     else:
         print("Wrong strategy name")
     end = time.time()
@@ -124,12 +122,10 @@ def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
         for symbol in strategy_option: 
             if symbol in children_matrices:
                 child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
-                                    current_state, current_state.path[:], current_state.solution_length + 1)
+                                    current_state.path[:], current_state.solution_length + 1)
                 if child not in explored:
                     child.addPathStep(symbol)
                     frontier.append(child) 
-                    if child.solution_length > State.max_achieved_depth:
-                        State.max_achieved_depth = child.solution_length
         explored.add(current_state)
         if frontier != []:
             current_state = frontier.pop(0) #next state to check
@@ -137,7 +133,11 @@ def solveBfs(strategy_option, root_state, target_state_matrix): # FIFO approach
         else:
             print("cannot find solution")
             current_state.solution_length = -1
+            current_state.visited_states_count = len(explored) + len(frontier)
+            current_state.explored_states_count = len(explored)
             return current_state
+        if current_state.solution_length > State.max_achieved_depth:
+            State.max_achieved_depth = current_state.solution_length
     print("found solution for bfs") 
     last_state.visited_states_count = len(explored) + len(frontier)
     last_state.explored_states_count = len(explored)
@@ -150,13 +150,13 @@ def solveDfs(strategy_option, root_state, target_state_matrix, max_possible_dept
 
     current_state = root_state
 
-    counter = 1000000 # big number to avoid dfs cannot find solution, max visited states
+    counter = 10000000 # big number to avoid dfs cannot find solution, max visited states
     while (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and counter > 0: #different than bfs
         children_matrices = generateChildren(current_state)
         for symbol in strategy_option[::-1]: #different than bfs
             if symbol in children_matrices:
                 child = State(children_matrices[symbol], current_state.rows, current_state.columns, 
-                                    current_state, current_state.path[:], current_state.solution_length + 1) 
+                                    current_state.path[:], current_state.solution_length + 1) 
                 if child not in explored:
                     # assure that we won't go further than max recursion
                     if child.solution_length > max_possible_depth:
@@ -164,9 +164,6 @@ def solveDfs(strategy_option, root_state, target_state_matrix, max_possible_dept
                     else:
                         child.addPathStep(symbol)
                         frontier.append(child) 
-                        # increment max achieved recursion level 
-                        if child.solution_length > State.max_achieved_depth:
-                            State.max_achieved_depth = child.solution_length
         explored.add(current_state)
         if frontier != []:
             current_state = frontier.pop()  #different than bfs
@@ -174,13 +171,20 @@ def solveDfs(strategy_option, root_state, target_state_matrix, max_possible_dept
         else:
             print("cannot find solution")
             current_state.solution_length = -1
+            current_state.visited_states_count = len(explored) + len(frontier)
+            current_state.explored_states_count = len(explored)
             return current_state
+        # increment max achieved recursion level 
+        if current_state.solution_length > State.max_achieved_depth:
+            State.max_achieved_depth = current_state.solution_length
         counter -= 1
     last_state.visited_states_count = len(explored) + len(frontier)
     last_state.explored_states_count = len(explored)
     if (stateIsTarget(current_state.state_matrix, target_state_matrix) != True) and counter == 0:
         print("cannot find solution")
         current_state.solution_length = -1
+        current_state.visited_states_count = len(explored) + len(frontier)
+        current_state.explored_states_count = len(explored)
         return current_state
     print("found solution for dfs")
     return last_state
@@ -196,12 +200,10 @@ def solveAstar(strategy_option, root_state, target_state_matrix): #best first
         sorted_keys = orderChildren(strategy_option, children_matrices, current_state.rows, current_state.columns)
         for sorted_key in sorted_keys:
             child = State(children_matrices[sorted_key[0]], current_state.rows, current_state.columns, 
-                                current_state, current_state.path[:], current_state.solution_length + 1)
+                                current_state.path[:], current_state.solution_length + 1)
             if child not in explored:
                 child.addPathStep(sorted_key[0])
                 frontier.append(child) 
-                if child.solution_length > State.max_achieved_depth:
-                        State.max_achieved_depth = child.solution_length
         explored.add(current_state)
         if frontier != []:
             current_state = frontier.pop(0) #next state to check
@@ -209,7 +211,11 @@ def solveAstar(strategy_option, root_state, target_state_matrix): #best first
         else:
             print("cannot find solution")
             current_state.solution_length = -1
+            current_state.visited_states_count = len(explored) + len(frontier)
+            current_state.explored_states_count = len(explored)
             return current_state
+        if current_state.solution_length > State.max_achieved_depth:
+            State.max_achieved_depth = current_state.solution_length
     print("found solution for astar") 
     last_state.visited_states_count = len(explored) + len(frontier)
     last_state.explored_states_count = len(explored)
@@ -297,8 +303,7 @@ def saveSolution(solution_length, solution_path, strategy, strategy_option, path
     dir_name = "solutions"
     makeDir(dir_name)
 
-    #for batchresolver
-    regex = re.compile(r"[0-9][x][0-9]_[0-9]+_[0-9]+.txt")
+    regex = re.compile(r"\d[x]\d_\d{2}_\d{5}")
     path_to_in_file = regex.findall(path_to_in_file)[0]
 
     f = open(dir_name + "/" + path_to_in_file + "_" + strategy + "_" + strategy_option + "_sol.txt", 'w')
@@ -312,8 +317,7 @@ def saveStats(solution_length, visited_states_count, explored_states_count, max_
     dir_name = "stats"
     makeDir(dir_name)
 
-    #for batchresolver
-    regex = re.compile(r"[0-9][x][0-9]_[0-9]+_[0-9]+.txt")
+    regex = re.compile(r"\d[x]\d_\d{2}_\d{5}")
     path_to_in_file = regex.findall(path_to_in_file)[0]
 
     f = open(dir_name + "/" + path_to_in_file + "_" + strategy + "_" + strategy_option + "_stats.txt", 'w')
@@ -325,8 +329,6 @@ def makeDir(dir_name):
     if not os.path.exists(dir_name):
         os.mkdir(dir_name)
         print("Directory \"" + dir_name + "\" Created ")
-    else:    
-        print("Directory \"" + dir_name + "\" already exists")
 
 if __name__ == "__main__":
     main()

@@ -3,19 +3,22 @@ from os.path import isfile, join
 import os
 import re
 
-onlyfiles = [f for f in listdir('test_files') if isfile(join('test_files', f))]
-onlyfiles = sorted(onlyfiles)
+testdir = 'test_files'
+statfiles = [f for f in listdir(testdir) if isfile(join(testdir, f))]
+statfiles = sorted(statfiles)
+
+for strategy_option in ["hamm", "manh"]:
+        for file in statfiles:
+                if re.match(r"\d[x]\d_\d{2}_\d{5}.txt", file):
+                        os.system("python fifteenresolver.py astr " +  strategy_option + " " + testdir + "/" + file)
+                        print("astr", strategy_option, file)
+
 
 for strategy in ["bfs", "dfs"]:
         for strategy_option in ["RDUL", "RDLU", "DRUL", "DRLU", "LUDR", "LURD", "ULDR", "ULRD"]:
-                for file in onlyfiles:
-                        if re.match(r"[0-9][x][0-9]_[0-9]+_[0-9]+.txt", file):
-                                os.system("python fifteenresolver.py " + strategy + " " +  strategy_option + " test_files/" + file)
+                for file in statfiles:
+                        if re.match(r"\d[x]\d_\d{2}_\d{5}.txt", file):
+                                os.system("python fifteenresolver.py " + strategy + " " +  strategy_option + " " + testdir + "/" + file)
                                 print(strategy, strategy_option, file)
 
 
-for strategy_option in ["hamm", "manh"]:
-        for file in onlyfiles:
-                if re.match(r"[0-9][x][0-9]_[0-9]+_[0-9]+.txt", file):
-                        os.system("python fifteenresolver.py astr " +  strategy_option + " test_files/" + file)
-                        print("astr", strategy_option, file)
