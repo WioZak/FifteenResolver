@@ -47,3 +47,9 @@ Program will solve the puzzle to match target state:
 9 10 11 12
 13 14 15 0
 ```
+
+You can also use batchresolver.py to generate solutions and statistics for every file in test_files directory.
+To generate csv with statistics (15data.csv), use writecsv.py script.
+To generate plots, use generateplots.py script (generated plots will be in plots directory).
+
+
