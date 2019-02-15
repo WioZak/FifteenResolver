@@ -29,7 +29,7 @@ Input file:
 first line: <number_of_rows> <number_of_columns>
 next lines: <puzzle_matrix>
 ```
-For puzzle 2x2 we count tiles as follows: 1,2,3,0, where 0 is the missing tile.\
+For puzzle 2x2 we count tiles as follows: 1,2,3,0, where 0 is the missing tile.
 
 Example file with 4x4 puzzle:
 ```
